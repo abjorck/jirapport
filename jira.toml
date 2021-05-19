@@ -1,0 +1,22 @@
+fields = [
+    'summary',
+    'status',
+    'components',
+    'issuetype'
+]
+board = 'My sprint board'
+project = 'ALA'
+components = [
+    'App component',
+    'Backend',
+    '*',
+]
+status_tables = [
+    ['Done'],
+    [
+    'Review',
+    'In progress',
+    'Ready',
+    'To do',
+    ],
+]
