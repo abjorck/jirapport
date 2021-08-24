@@ -8,7 +8,7 @@ extern crate serde_json;
 use goji::{Credentials, Jira, SearchOptionsBuilder, Issue};
 use std::{env, io};
 use std::fs::{File, create_dir};
-use std::path::{Path};
+use std::path::{Path, PathBuf};
 
 #[macro_use]
 extern crate prettytable;
@@ -16,6 +16,7 @@ extern crate prettytable;
 use prettytable::{Table};
 use std::io::{Read, stdin, Write};
 use crate::customfields::Flag;
+use dirs::config_dir;
 
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -45,8 +46,12 @@ impl Default for Config {
     }
 }
 
-const CONFIG_FILENAME: &str = "jira.toml";
-
+fn get_conf_path() -> PathBuf {
+    const CONFIG_FILENAME: &str = "jira.toml";
+    let mut conf_path = dirs::config_dir().or(Some(PathBuf::from("."))).unwrap();
+    conf_path.push(CONFIG_FILENAME);
+    conf_path
+}
 fn main() {
     let mut used_cache = false;
 
@@ -125,7 +130,9 @@ fn get_conf() -> Config {
     let mut save_pass = false;
     let mut dirty_conf = false;
     let mut buf = String::new();
-    let mut conf: Config = File::open(CONFIG_FILENAME).map(|mut f| if let Ok(_) = f.read_to_string(&mut buf) {
+    let mut conf_path = get_conf_path();
+    println!("{:?}", conf_path);
+    let mut conf: Config = File::open(conf_path).map(|mut f| if let Ok(_) = f.read_to_string(&mut buf) {
         toml::from_str(buf.as_str()).unwrap_or_default()
     } else {
         Config::default()
@@ -175,7 +182,7 @@ fn get_conf() -> Config {
             outconf.jira_pass = None
         }
         if let Ok(data) = toml::to_string(&outconf) {
-            if let Ok(mut file) = File::create(CONFIG_FILENAME) {
+            if let Ok(mut file) = File::create(get_conf_path()) {
                 match file.write(data.as_bytes()) {
                     Err(e) => {
                         eprintln!("Warning, failed to write config to file. {}", e.to_string());
